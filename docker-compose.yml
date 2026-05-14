@@ -6,6 +6,10 @@ services:
       - sqp-mongo-data:/data/db
     restart: unless-stopped
   app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    image: sqp-kanban
     container_name: sqp-kanban
     ports: 4000:4000
     environment:
@@ -15,4 +19,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  sqp-mongo-data
+  sqp-mongo-data:
+    driver: local
