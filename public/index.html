@@ -669,7 +669,12 @@ function normalizeBoardData() {
   });
 }
 
+let isLoading = false;
+
 async function loadBoard() {
+  if (isLoading) return;
+  isLoading = true;
+
   try {
     const res = await fetch("/api/board");
 
@@ -685,15 +690,7 @@ async function loadBoard() {
     renderTrashZone();
 
     setSaveStatus("Loaded");
-//   } catch {
-    // setSaveStatus("Load failed");
-    // board.innerHTML = `
-    //   <div style="padding:24px;color:white;">
-    //     Could not load board. Check backend and MongoDB.
-    //   </div>
-    // `;
-
-    } catch (error) {
+  } catch (error) {
     console.error("loadBoard failed:", error);
     setSaveStatus("Load failed");
     board.innerHTML = `
@@ -701,8 +698,9 @@ async function loadBoard() {
         Could not load board. Check backend and MongoDB.
       </div>
     `;
-    }
-  //}
+  } finally {
+    isLoading = false;
+  }
 }
 
 function renderProjectsPanel() {
