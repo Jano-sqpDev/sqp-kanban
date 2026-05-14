@@ -8,10 +8,11 @@ services:
   app:
     build:
       context: .
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     image: sqp-kanban
     container_name: sqp-kanban
-    ports: 4000:4000
+    ports: 
+      - "4000:4000"
     environment:
       - MONGO_URI=mongodb://mongo:27017/sqp-kanban
     depends_on:
