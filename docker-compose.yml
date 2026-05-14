@@ -1,0 +1,23 @@
+services:
+  mongo:
+    image: mongo:8
+    container_name: sqp-mongo
+    volumes:
+      - sqp-mongo-data:/data/db
+    restart: unless-stopped
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    image: sqp-kanban
+    container_name: sqp-kanban
+    ports: 4000:4000
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/sqp-kanban
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+volumes:
+  sqp-mongo-data:
+    driver: local

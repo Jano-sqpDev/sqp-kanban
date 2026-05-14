@@ -5,77 +5,404 @@
   <title>SQP Kanban</title>
 
   <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --bg-main: #070b14;
+      --border-soft: rgba(148, 163, 184, 0.18);
+      --border-strong: rgba(203, 213, 225, 0.28);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-soft: #cbd5e1;
+      --danger: #ef4444;
+      --radius-lg: 22px;
+      --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.45);
+      --shadow-md: 0 14px 34px rgba(0, 0, 0, 0.32);
+    }
+
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111827;
-      color: white;
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(99, 102, 241, 0.16), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.08), transparent 38%),
+        var(--bg-main);
+      color: var(--text-main);
+      overflow: hidden;
     }
 
     header {
+      height: 76px;
       padding: 16px 24px;
-      background: #020617;
+      background: rgba(2, 6, 23, 0.82);
+      border-bottom: 1px solid var(--border-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #6366f1, #0ea5e9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: white;
+    }
+
+    .brand {
+      font-size: 21px;
+      font-weight: 850;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .actions {
       display: flex;
       gap: 12px;
       align-items: center;
     }
 
+    #saveStatus {
+      min-width: 80px;
+      text-align: right;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
     button {
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px;
+      padding: 10px 15px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
       cursor: pointer;
-      background: #2563eb;
+      background: linear-gradient(135deg, #4f46e5, #2563eb);
       color: white;
+      font-weight: 800;
+    }
+
+    button.secondary {
+      background: #1e293b;
+      color: var(--text-soft);
+    }
+
+    #board-wrapper {
+      display: flex;
+      height: calc(100vh - 76px);
+    }
+
+    .projects-panel {
+      width: 250px;
+      min-width: 250px;
+      padding: 22px 14px;
+      background: rgba(2, 6, 23, 0.34);
+      border-right: 1px solid var(--border-soft);
+    }
+
+    .projects-frame {
+      height: 100%;
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      background: rgba(255,255,255,0.03);
+      overflow-y: auto;
+    }
+
+    .projects-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .projects-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .project-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: rgba(148, 163, 184, 0.12);
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .project-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      margin-bottom: 9px;
+      border-radius: 15px;
+      background: rgba(15, 23, 42, 0.62);
+      border: 1px solid rgba(148, 163, 184, 0.13);
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .project-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .project-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .delete-project {
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border-radius: 999px;
+      background: rgba(239, 68, 68, 0.16);
+      color: #fecaca;
+      border: 1px solid rgba(239, 68, 68, 0.32);
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .empty-projects {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     #board {
+      flex: 1;
       display: flex;
-      gap: 16px;
-      padding: 20px;
+      gap: 18px;
+      padding: 22px;
       overflow-x: auto;
-      height: calc(100vh - 70px);
-      box-sizing: border-box;
+      overflow-y: hidden;
     }
 
     .column {
-      min-width: 280px;
-      max-width: 280px;
-      border-radius: 10px;
-      padding: 12px;
+      min-width: 310px;
+      max-width: 310px;
+      border-radius: var(--radius-lg);
+      padding: 14px;
       display: flex;
       flex-direction: column;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: var(--shadow-md);
+    }
+
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
     }
 
     .column h2 {
-      margin: 0 0 12px;
-      font-size: 18px;
+      margin: 0;
+      font-size: 16px;
+      font-weight: 900;
+      color: white;
+      outline: none;
+    }
+
+    .task-count {
+      font-size: 11px;
+      font-weight: 900;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(2, 6, 23, 0.35);
+      color: rgba(255,255,255,0.9);
     }
 
     .tasks {
       flex: 1;
-      min-height: 120px;
+      min-height: 150px;
       padding: 8px;
-      border: 2px dashed rgba(255,255,255,0.25);
-      border-radius: 8px;
+      border: 1px dashed rgba(255,255,255,0.20);
+      border-radius: 17px;
+      background: rgba(2, 6, 23, 0.18);
     }
 
     .task {
       color: white;
-      padding: 10px;
-      margin-bottom: 8px;
-      border-radius: 6px;
+      padding: 13px;
+      margin-bottom: 10px;
+      border-radius: 16px;
       cursor: grab;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      box-shadow: 0 12px 26px rgba(0,0,0,0.28);
+      line-height: 1.4;
+      border: 1px solid rgba(255,255,255,0.13);
     }
 
-    .task:focus {
-      outline: 2px solid white;
+    .task-meta {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .project-chip {
+      max-width: 150px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(2, 6, 23, 0.24);
+      font-size: 11px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.92);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .task-dates {
+      font-size: 10px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.35;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .task-title {
+      font-size: 15px;
+      font-weight: 800;
+      outline: none;
+    }
+
+    .task-project-label {
+      font-size: 15px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.5);
+      margin-right: 4px;
     }
 
     .add-task {
-      margin-top: 10px;
-      background: rgba(255,255,255,0.25);
+      margin-top: 12px;
+      background: rgba(255,255,255,0.14);
+      width: 100%;
+    }
+
+    .trash-column {
+      width: 118px;
+      min-width: 118px;
+      background: rgba(2, 6, 23, 0.36);
+      border-left: 1px solid var(--border-soft);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 22px;
+    }
+
+    .trash-inner {
+      width: 82px;
+      height: 142px;
+      border-radius: 24px;
+      border: 1px dashed rgba(203, 213, 225, 0.42);
+      background: rgba(255,255,255,0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+    }
+
+    .trash-inner.drag-over {
+      background: rgba(127, 29, 29, 0.88);
+      border-color: var(--danger);
+      transform: scale(1.05);
+    }
+
+    .trash-icon {
+      font-size: 39px;
+    }
+
+    .trash-label {
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--text-soft);
+    }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.68);
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .modal {
+      width: 390px;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal h3 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 7px;
+      font-size: 13px;
+      font-weight: 760;
+      color: var(--text-soft);
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.26);
+      background: rgba(15, 23, 42, 0.72);
+      color: white;
+      outline: none;
+    }
+
+    .modal-actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
     }
   </style>
 </head>
@@ -83,22 +410,124 @@
 <body>
 
 <header>
-  <strong>SQP Kanban</strong>
-  <button onclick="saveBoard()">Save</button>
+  <div class="brand-wrap">
+    <div class="brand-logo">S</div>
+    <div>
+      <div class="brand">SQP Kanban</div>
+      <div class="subtitle">Mongo-backed project board</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <span id="saveStatus">Loaded</span>
+    <button onclick="openProjectModal()">+ Add Project</button>
+  </div>
 </header>
 
-<div id="board"></div>
+<div id="board-wrapper">
+  <div id="projectsPanel" class="projects-panel"></div>
+  <div id="board"></div>
+  <div id="trashZone" class="trash-column"></div>
+</div>
+
+<div id="projectModal" class="modal-backdrop">
+  <div class="modal">
+    <h3>Add Project</h3>
+
+    <label>Project name</label>
+    <input id="projectNameInput" placeholder="Example: Website Redesign" />
+
+    <label>Project colour</label>
+    <input id="projectColorInput" type="color" value="#64748b" />
+
+    <div class="modal-actions">
+      <button class="secondary" onclick="closeProjectModal()">Cancel</button>
+      <button onclick="addProject()">Add</button>
+    </div>
+  </div>
+</div>
+
+<div id="taskModal" class="modal-backdrop">
+  <div class="modal">
+    <h3>Add Task</h3>
+
+    <label>Task name</label>
+    <input id="taskTitleInput" placeholder="Example: Build login page" />
+
+    <label>Project</label>
+    <select id="taskProjectSelect"></select>
+
+    <div class="modal-actions">
+      <button class="secondary" onclick="closeTaskModal()">Cancel</button>
+      <button onclick="addTask()">Add</button>
+    </div>
+  </div>
+</div>
 
 <script>
 let boardData = null;
 let draggedTask = null;
+let activeColumn = null;
+let saveTimer = null;
 
 const board = document.getElementById("board");
+const saveStatus = document.getElementById("saveStatus");
+
+function setSaveStatus(text) {
+  saveStatus.innerText = text;
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function isValidHexColor(value) {
+  return /^#[0-9a-fA-F]{6}$/.test(value);
+}
+
+function safeColor(value, fallback = "#334155") {
+  return isValidHexColor(value) ? value : fallback;
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  setSaveStatus("Saving...");
+
+  saveTimer = setTimeout(async () => {
+    await saveBoard();
+  }, 500);
+}
+
+async function saveBoard() {
+  if (!boardData || !boardData._id) return;
+
+  try {
+    const res = await fetch(`/api/board/${boardData._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(boardData)
+    });
+
+    if (!res.ok) {
+      throw new Error("Server returned " + res.status);
+    }
+
+    setSaveStatus(`Saved ${new Date().toLocaleTimeString()}`);
+  } catch {
+    setSaveStatus("Save failed");
+  }
+}
 
 function hexToRgb(hex) {
-  hex = hex.replace("#", "");
-
-  const num = parseInt(hex, 16);
+  const cleanHex = safeColor(hex).replace("#", "");
+  const num = parseInt(cleanHex, 16);
 
   return {
     r: (num >> 16) & 255,
@@ -110,7 +539,8 @@ function hexToRgb(hex) {
 function rgbToHex(r, g, b) {
   return "#" + [r, g, b]
     .map(value => {
-      const hex = Math.round(value).toString(16);
+      const safeValue = Math.max(0, Math.min(255, Math.round(value)));
+      const hex = safeValue.toString(16);
       return hex.length === 1 ? "0" + hex : hex;
     })
     .join("");
@@ -139,29 +569,259 @@ function getTaskColor(columnColor) {
   const brightened = brightenRgb(rgb, 22.5);
   const desaturated = desaturateRgb(brightened, 20);
 
-  return rgbToHex(
-    desaturated.r,
-    desaturated.g,
-    desaturated.b
-  );
+  return rgbToHex(desaturated.r, desaturated.g, desaturated.b);
+}
+
+function getProject(projectId) {
+  if (!boardData || !Array.isArray(boardData.projects)) return null;
+  if (!projectId) return null;
+
+  return boardData.projects.find(project => {
+    return String(project._id) === String(projectId);
+  }) || null;
+}
+
+function getProjectName(projectId) {
+  const project = getProject(projectId);
+  return project ? project.name : "No Project";
+}
+
+function getProjectColor(projectId) {
+  const project = getProject(projectId);
+  return project ? safeColor(project.color, "#cbd5e1") : "#cbd5e1";
+}
+
+function formatDate(value) {
+  if (!value) return "";
+
+  try {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric"
+    });
+  } catch {
+    return "";
+  }
+}
+
+function normaliseColumnName(name) {
+  return String(name || "").trim().toLowerCase();
+}
+
+function updateTaskDatesForColumn(task, columnTitle) {
+  const name = normaliseColumnName(columnTitle);
+  const now = new Date().toISOString();
+
+  if (!task.createdAt) {
+    task.createdAt = now;
+  }
+
+  if (name === "in progress" && !task.startedAt) {
+    task.startedAt = now;
+  }
+
+  if ((name === "completed" || name === "omit") && !task.finishedAt) {
+    task.finishedAt = now;
+  }
+}
+
+function normalizeBoardData() {
+  if (!boardData.projects || !Array.isArray(boardData.projects)) {
+    boardData.projects = [];
+  }
+
+  if (!boardData.columns || !Array.isArray(boardData.columns)) {
+    boardData.columns = [];
+  }
+
+  boardData.columns.forEach(column => {
+    column.title = column.title || "Untitled";
+    column.color = safeColor(column.color);
+
+    if (!column.tasks || !Array.isArray(column.tasks)) {
+      column.tasks = [];
+    }
+
+    column.tasks.forEach(task => {
+      task.title = task.title || "Untitled task";
+      task.projectId = task.projectId || "";
+      task.description = task.description || "";
+      task.createdAt = task.createdAt || new Date().toISOString();
+
+      if (task.startedAt === undefined) {
+        task.startedAt = null;
+      }
+
+      if (task.finishedAt === undefined) {
+        task.finishedAt = null;
+      }
+
+      if (!task._id) {
+        task._id = crypto.randomUUID();
+      }
+    });
+  });
 }
 
 async function loadBoard() {
-  const res = await fetch("/api/board");
-  boardData = await res.json();
-  renderBoard();
+  try {
+    const res = await fetch("/api/board");
+
+    if (!res.ok) {
+      throw new Error("Could not load board");
+    }
+
+    boardData = await res.json();
+    normalizeBoardData();
+
+    renderBoard();
+    renderProjectsPanel();
+    renderTrashZone();
+
+    setSaveStatus("Loaded");
+  } catch {
+    setSaveStatus("Load failed");
+    board.innerHTML = `
+      <div style="padding:24px;color:white;">
+        Could not load board. Check backend and MongoDB.
+      </div>
+    `;
+  }
 }
 
-async function saveBoard() {
-  await fetch(`/api/board/${boardData._id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(boardData)
+function renderProjectsPanel() {
+  const panel = document.getElementById("projectsPanel");
+
+  panel.innerHTML = `
+    <div class="projects-frame">
+      <div class="projects-title-row">
+        <h3 class="projects-title">Projects</h3>
+        <span class="project-count">${boardData.projects.length}</span>
+      </div>
+
+      <div id="projectsList"></div>
+    </div>
+  `;
+
+  const projectsList = document.getElementById("projectsList");
+
+  if (!boardData.projects.length) {
+    projectsList.innerHTML = `
+      <div class="empty-projects">
+        No projects yet.<br />
+        Add one from the top-right button.
+      </div>
+    `;
+    return;
+  }
+
+  boardData.projects.forEach(project => {
+    const item = document.createElement("div");
+    item.className = "project-item";
+
+    item.innerHTML = `
+      <div
+        class="project-dot"
+        style="background:${safeColor(project.color, "#64748b")}"
+      ></div>
+
+      <div class="project-name">
+        ${escapeHtml(project.name)}
+      </div>
+
+      <button
+        class="delete-project"
+        title="Delete project"
+      >
+        ×
+      </button>
+    `;
+
+    const deleteButton = item.querySelector(".delete-project");
+
+    deleteButton.addEventListener("click", () => {
+      deleteProject(project._id);
+    });
+
+    projectsList.appendChild(item);
+  });
+}
+
+function deleteProject(projectId) {
+  const project = getProject(projectId);
+
+  if (!project) return;
+
+  const confirmed = confirm(
+    `Delete project "${project.name}"?\n\nTasks assigned to this project will become "No Project".`
+  );
+
+  if (!confirmed) return;
+
+  boardData.projects = boardData.projects.filter(project => {
+    return String(project._id) !== String(projectId);
   });
 
-  alert("Board saved");
+  boardData.columns.forEach(column => {
+    column.tasks.forEach(task => {
+      if (String(task.projectId) === String(projectId)) {
+        task.projectId = "";
+      }
+    });
+  });
+
+  renderBoard();
+  renderProjectsPanel();
+  renderTrashZone();
+  scheduleSave();
+}
+
+function renderTrashZone() {
+  const trashZone = document.getElementById("trashZone");
+
+  trashZone.innerHTML = `
+    <div class="trash-inner" id="trashInner">
+      <div class="trash-icon">🗑️</div>
+      <div class="trash-label">Delete</div>
+    </div>
+  `;
+
+  const trashInner = document.getElementById("trashInner");
+
+  trashInner.addEventListener("dragover", event => {
+    event.preventDefault();
+    trashInner.classList.add("drag-over");
+  });
+
+  trashInner.addEventListener("dragleave", () => {
+    trashInner.classList.remove("drag-over");
+  });
+
+  trashInner.addEventListener("drop", event => {
+    event.preventDefault();
+
+    if (!draggedTask) return;
+
+    boardData.columns.forEach(column => {
+      column.tasks = column.tasks.filter(task => {
+        return String(task._id) !== String(draggedTask._id);
+      });
+    });
+
+    draggedTask = null;
+    trashInner.classList.remove("drag-over");
+
+    renderBoard();
+    renderProjectsPanel();
+    renderTrashZone();
+    scheduleSave();
+  });
 }
 
 function renderBoard() {
@@ -169,16 +829,29 @@ function renderBoard() {
 
   boardData.columns.forEach(column => {
     const columnEl = document.createElement("div");
+    const columnColor = safeColor(column.color);
+
     columnEl.className = "column";
-    columnEl.style.background = column.color;
+    columnEl.style.background = columnColor;
+
+    const headerEl = document.createElement("div");
+    headerEl.className = "column-header";
 
     const title = document.createElement("h2");
     title.contentEditable = true;
     title.innerText = column.title;
 
     title.addEventListener("input", () => {
-      column.title = title.innerText;
+      column.title = title.innerText.trim() || "Untitled";
+      scheduleSave();
     });
+
+    const count = document.createElement("span");
+    count.className = "task-count";
+    count.innerText = column.tasks.length;
+
+    headerEl.appendChild(title);
+    headerEl.appendChild(count);
 
     const tasksEl = document.createElement("div");
     tasksEl.className = "tasks";
@@ -187,65 +860,191 @@ function renderBoard() {
       event.preventDefault();
     });
 
-    tasksEl.addEventListener("drop", () => {
+    tasksEl.addEventListener("drop", event => {
+      event.preventDefault();
+
       if (!draggedTask) return;
 
       boardData.columns.forEach(currentColumn => {
         currentColumn.tasks = currentColumn.tasks.filter(task => {
-          return task._id !== draggedTask._id;
+          return String(task._id) !== String(draggedTask._id);
         });
       });
+
+      updateTaskDatesForColumn(draggedTask, column.title);
 
       column.tasks.push(draggedTask);
       draggedTask = null;
 
       renderBoard();
+      renderProjectsPanel();
+      renderTrashZone();
+      scheduleSave();
     });
 
     column.tasks.forEach(task => {
       const taskEl = document.createElement("div");
       taskEl.className = "task";
       taskEl.draggable = true;
-      taskEl.contentEditable = true;
-      taskEl.innerText = task.title;
+      taskEl.style.background = getTaskColor(columnColor);
 
-      taskEl.style.background = getTaskColor(column.color);
+      const projectName = getProjectName(task.projectId);
+      const projectColor = getProjectColor(task.projectId);
+
+      const created = formatDate(task.createdAt);
+      const started = formatDate(task.startedAt);
+      const finished = formatDate(task.finishedAt);
+
+      const metaEl = document.createElement("div");
+      metaEl.className = "task-meta";
+
+      metaEl.innerHTML = `
+        <div class="project-chip">
+          <span
+            class="chip-dot"
+            style="background:${projectColor}"
+          ></span>
+          <span>${escapeHtml(projectName)}</span>
+        </div>
+
+        <div class="task-dates">
+          Created: ${escapeHtml(created || "-")}<br>
+          Started: ${escapeHtml(started || "-")}<br>
+          Completed: ${escapeHtml(finished || "-")}
+        </div>
+      `;
+
+      const titleWrap = document.createElement("div");
+      titleWrap.style.display = "flex";
+      titleWrap.style.alignItems = "baseline";
+
+      const projectLabel = document.createElement("span");
+      projectLabel.className = "task-project-label";
+      projectLabel.innerText = `${projectName} | `;
+
+      const titleEl = document.createElement("span");
+      titleEl.className = "task-title";
+      titleEl.contentEditable = true;
+      titleEl.innerText = task.title;
+
+      titleEl.addEventListener("input", () => {
+        task.title = titleEl.innerText.trim() || "Untitled task";
+        scheduleSave();
+      });
+
+      titleWrap.appendChild(projectLabel);
+      titleWrap.appendChild(titleEl);
 
       taskEl.addEventListener("dragstart", () => {
         draggedTask = task;
       });
 
-      taskEl.addEventListener("input", () => {
-        task.title = taskEl.innerText;
+      taskEl.addEventListener("dragend", () => {
+        draggedTask = null;
       });
 
+      taskEl.appendChild(metaEl);
+      taskEl.appendChild(titleWrap);
       tasksEl.appendChild(taskEl);
     });
 
     const addButton = document.createElement("button");
     addButton.className = "add-task";
-    addButton.innerText = "+ Add task";
+    addButton.innerText = "+ Add Task";
 
     addButton.onclick = () => {
-      const title = prompt("Task title:");
-      if (!title) return;
-
-      column.tasks.push({
-        _id: crypto.randomUUID(),
-        title,
-        description: "",
-        createdAt: new Date().toISOString()
-      });
-
-      renderBoard();
+      activeColumn = column;
+      openTaskModal();
     };
 
-    columnEl.appendChild(title);
+    columnEl.appendChild(headerEl);
     columnEl.appendChild(tasksEl);
     columnEl.appendChild(addButton);
 
     board.appendChild(columnEl);
   });
+}
+
+function openProjectModal() {
+  document.getElementById("projectModal").style.display = "flex";
+}
+
+function closeProjectModal() {
+  document.getElementById("projectModal").style.display = "none";
+  document.getElementById("projectNameInput").value = "";
+}
+
+function addProject() {
+  const name = document.getElementById("projectNameInput").value.trim();
+  const color = document.getElementById("projectColorInput").value;
+
+  if (!name) return;
+
+  boardData.projects.push({
+    _id: crypto.randomUUID(),
+    name,
+    color: safeColor(color, "#64748b")
+  });
+
+  closeProjectModal();
+
+  renderBoard();
+  renderProjectsPanel();
+  renderTrashZone();
+  scheduleSave();
+}
+
+function openTaskModal() {
+  const select = document.getElementById("taskProjectSelect");
+
+  select.innerHTML = "";
+
+  const noProjectOption = document.createElement("option");
+  noProjectOption.value = "";
+  noProjectOption.innerText = "No Project";
+  select.appendChild(noProjectOption);
+
+  boardData.projects.forEach(project => {
+    const option = document.createElement("option");
+    option.value = project._id;
+    option.innerText = project.name;
+    select.appendChild(option);
+  });
+
+  document.getElementById("taskModal").style.display = "flex";
+}
+
+function closeTaskModal() {
+  document.getElementById("taskModal").style.display = "none";
+  document.getElementById("taskTitleInput").value = "";
+}
+
+function addTask() {
+  const title = document.getElementById("taskTitleInput").value.trim();
+  const projectId = document.getElementById("taskProjectSelect").value;
+
+  if (!title || !activeColumn) return;
+
+  const newTask = {
+    _id: crypto.randomUUID(),
+    title,
+    projectId,
+    description: "",
+    createdAt: new Date().toISOString(),
+    startedAt: null,
+    finishedAt: null
+  };
+
+  updateTaskDatesForColumn(newTask, activeColumn.title);
+
+  activeColumn.tasks.push(newTask);
+
+  closeTaskModal();
+
+  renderBoard();
+  renderProjectsPanel();
+  renderTrashZone();
+  scheduleSave();
 }
 
 loadBoard();
