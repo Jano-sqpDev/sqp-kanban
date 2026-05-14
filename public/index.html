@@ -494,6 +494,18 @@ function safeColor(value, fallback = "#334155") {
   return isValidHexColor(value) ? value : fallback;
 }
 
+function generateId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 function scheduleSave() {
   clearTimeout(saveTimer);
   setSaveStatus("Saving...");
@@ -663,7 +675,7 @@ function normalizeBoardData() {
       }
 
       if (!task._id) {
-        task._id = crypto.randomUUID();
+        task._id = generateId();
       }
     });
   });
@@ -989,7 +1001,7 @@ function addProject() {
   if (!name) return;
 
   boardData.projects.push({
-    _id: crypto.randomUUID(),
+    _id: generateId(),
     name,
     color: safeColor(color, "#64748b")
   });
@@ -1034,7 +1046,7 @@ function addTask() {
   if (!title || !activeColumn) return;
 
   const newTask = {
-    _id: crypto.randomUUID(),
+    _id: generateId(),
     title,
     projectId,
     description: "",
