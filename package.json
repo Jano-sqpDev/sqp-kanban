@@ -1,0 +1,37 @@
+{
+  "name": "sqp-kanban",
+  "version": "1.0.0",
+  "description": "Simple Mongo-backed Kanban app for testing CI/CD pipelines",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jano-sqpDev/sqp-kanban.git"
+  },
+  "keywords": [
+    "sqp",
+    "kanban",
+    "mongodb",
+    "express",
+    "nodejs",
+    "ci-cd",
+    "pipeline",
+    "docker"
+  ],
+  "author": "Janusz Murawski",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jano-sqpDev/sqp-kanban/issues"
+  },
+  "homepage": "https://github.com/Jano-sqpDev/sqp-kanban#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.6.2"
+  }
+}

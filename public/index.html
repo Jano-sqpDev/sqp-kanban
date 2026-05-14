@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SQP Kanban</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: white;
+    }
+
+    header {
+      padding: 16px 24px;
+      background: #020617;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+    }
+
+    #board {
+      display: flex;
+      gap: 16px;
+      padding: 20px;
+      overflow-x: auto;
+      height: calc(100vh - 70px);
+      box-sizing: border-box;
+    }
+
+    .column {
+      min-width: 280px;
+      max-width: 280px;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .column h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .tasks {
+      flex: 1;
+      min-height: 120px;
+      padding: 8px;
+      border: 2px dashed rgba(255,255,255,0.25);
+      border-radius: 8px;
+    }
+
+    .task {
+      color: white;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      cursor: grab;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+
+    .task:focus {
+      outline: 2px solid white;
+    }
+
+    .add-task {
+      margin-top: 10px;
+      background: rgba(255,255,255,0.25);
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <strong>SQP Kanban</strong>
+  <button onclick="saveBoard()">Save</button>
+</header>
+
+<div id="board"></div>
+
+<script>
+let boardData = null;
+let draggedTask = null;
+
+const board = document.getElementById("board");
+
+function hexToRgb(hex) {
+  hex = hex.replace("#", "");
+
+  const num = parseInt(hex, 16);
+
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255
+  };
+}
+
+function rgbToHex(r, g, b) {
+  return "#" + [r, g, b]
+    .map(value => {
+      const hex = Math.round(value).toString(16);
+      return hex.length === 1 ? "0" + hex : hex;
+    })
+    .join("");
+}
+
+function brightenRgb(rgb, percent = 22.5) {
+  return {
+    r: rgb.r + (255 - rgb.r) * (percent / 100),
+    g: rgb.g + (255 - rgb.g) * (percent / 100),
+    b: rgb.b + (255 - rgb.b) * (percent / 100)
+  };
+}
+
+function desaturateRgb(rgb, percent = 20) {
+  const grey = rgb.r * 0.299 + rgb.g * 0.587 + rgb.b * 0.114;
+
+  return {
+    r: rgb.r + (grey - rgb.r) * (percent / 100),
+    g: rgb.g + (grey - rgb.g) * (percent / 100),
+    b: rgb.b + (grey - rgb.b) * (percent / 100)
+  };
+}
+
+function getTaskColor(columnColor) {
+  const rgb = hexToRgb(columnColor);
+  const brightened = brightenRgb(rgb, 22.5);
+  const desaturated = desaturateRgb(brightened, 20);
+
+  return rgbToHex(
+    desaturated.r,
+    desaturated.g,
+    desaturated.b
+  );
+}
+
+async function loadBoard() {
+  const res = await fetch("/api/board");
+  boardData = await res.json();
+  renderBoard();
+}
+
+async function saveBoard() {
+  await fetch(`/api/board/${boardData._id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(boardData)
+  });
+
+  alert("Board saved");
+}
+
+function renderBoard() {
+  board.innerHTML = "";
+
+  boardData.columns.forEach(column => {
+    const columnEl = document.createElement("div");
+    columnEl.className = "column";
+    columnEl.style.background = column.color;
+
+    const title = document.createElement("h2");
+    title.contentEditable = true;
+    title.innerText = column.title;
+
+    title.addEventListener("input", () => {
+      column.title = title.innerText;
+    });
+
+    const tasksEl = document.createElement("div");
+    tasksEl.className = "tasks";
+
+    tasksEl.addEventListener("dragover", event => {
+      event.preventDefault();
+    });
+
+    tasksEl.addEventListener("drop", () => {
+      if (!draggedTask) return;
+
+      boardData.columns.forEach(currentColumn => {
+        currentColumn.tasks = currentColumn.tasks.filter(task => {
+          return task._id !== draggedTask._id;
+        });
+      });
+
+      column.tasks.push(draggedTask);
+      draggedTask = null;
+
+      renderBoard();
+    });
+
+    column.tasks.forEach(task => {
+      const taskEl = document.createElement("div");
+      taskEl.className = "task";
+      taskEl.draggable = true;
+      taskEl.contentEditable = true;
+      taskEl.innerText = task.title;
+
+      taskEl.style.background = getTaskColor(column.color);
+
+      taskEl.addEventListener("dragstart", () => {
+        draggedTask = task;
+      });
+
+      taskEl.addEventListener("input", () => {
+        task.title = taskEl.innerText;
+      });
+
+      tasksEl.appendChild(taskEl);
+    });
+
+    const addButton = document.createElement("button");
+    addButton.className = "add-task";
+    addButton.innerText = "+ Add task";
+
+    addButton.onclick = () => {
+      const title = prompt("Task title:");
+      if (!title) return;
+
+      column.tasks.push({
+        _id: crypto.randomUUID(),
+        title,
+        description: "",
+        createdAt: new Date().toISOString()
+      });
+
+      renderBoard();
+    };
+
+    columnEl.appendChild(title);
+    columnEl.appendChild(tasksEl);
+    columnEl.appendChild(addButton);
+
+    board.appendChild(columnEl);
+  });
+}
+
+loadBoard();
+</script>
+
+</body>
+</html>
